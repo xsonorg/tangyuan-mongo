@@ -24,6 +24,7 @@ import org.xson.tangyuan.util.ClassUtils;
 import org.xson.tangyuan.util.DateUtils;
 import org.xson.tangyuan.util.NumberUtils;
 import org.xson.tangyuan.util.StringUtils;
+import org.xson.tangyuan.util.TYUtils;
 import org.xson.tangyuan.xml.XPathParser;
 import org.xson.tangyuan.xml.XmlConfigurationBuilder;
 import org.xson.tangyuan.xml.XmlMongoConfigBuilder;
@@ -72,16 +73,40 @@ public class XMLMongoNodeBuilder {
 		return false;
 	}
 
+	// private String getFullId(String id) {
+	// if (null == ns || "".equals(ns)) {
+	// return id;
+	// }
+	// return ns + "." + id;
+	// }
+
 	private String getFullId(String id) {
-		if (null == ns || "".equals(ns)) {
-			return id;
-		}
-		return ns + "." + id;
+		return TYUtils.getFullId(ns, id);
 	}
 
-	private void registerService(List<AbstractMongoNode> list, String nodeName) {
+	// private void registerService(List<AbstractMongoNode> list, String nodeName) {
+	// // TODO 这里还要排重
+	// for (AbstractMongoNode node : list) {
+	// TangYuanContainer.getInstance().addService(node);
+	// log.info("add <" + nodeName + "> node: " + node.getServiceKey());
+	// }
+	// }
+
+	protected void registerService(List<AbstractMongoNode> list, String nodeName) {
+		boolean result = TangYuanContainer.getInstance().hasLicenses();
 		for (AbstractMongoNode node : list) {
-			TangYuanContainer.getInstance().addService(node);
+			if (null != TangYuanContainer.getInstance().getService(node.getServiceKey())) {
+				throw new XmlParseException("重复的服务:" + node.getServiceKey());
+			}
+
+			if (result) {
+				TangYuanContainer.getInstance().addService(node);
+			} else {
+				log.info("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
+				if (NumberUtils.randomSuccess()) {
+					TangYuanContainer.getInstance().addService(node);
+				}
+			}
 			log.info("add <" + nodeName + "> node: " + node.getServiceKey());
 		}
 	}
@@ -963,14 +988,22 @@ public class XMLMongoNodeBuilder {
 
 	private class CallHandler implements NodeHandler {
 		public void handleNode(XmlNodeWrapper nodeToHandle, List<TangYuanNode> targetContents) {
-			String service = StringUtils.trim(nodeToHandle.getStringAttribute("service"));
-			if (null == service) {
-				throw new XmlParseException("call节点中service属性不能为空");
+			String serviceId = StringUtils.trim(nodeToHandle.getStringAttribute("service"));
+			if (null == serviceId) {
+				throw new XmlParseException("The service attribute in the call node can not be empty");
 			}
+
+			// fix: 新增变量调用功能
+			Object service = serviceId;
+			if (checkVar(serviceId)) {
+				service = new NormalParser().parse(serviceId);
+			}
+
 			String resultKey = getResultKey(StringUtils.trim(nodeToHandle.getStringAttribute("resultKey")));
-			String _mode = StringUtils.trim(nodeToHandle.getStringAttribute("mode"));// xml
-																						// validation
-			CallMode mode = CallMode.EXTEND;
+			String _mode = StringUtils.trim(nodeToHandle.getStringAttribute("mode"));// xml v
+
+			// CallMode mode = CallMode.EXTEND;
+			CallMode mode = null;// 增加新的默认模式
 			if (null != _mode) {
 				mode = getCallMode(_mode);
 			}

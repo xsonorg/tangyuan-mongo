@@ -16,6 +16,7 @@ import org.xson.tangyuan.ognl.vars.warper.SqlTextParserWarper;
 import org.xson.tangyuan.sharding.ShardingArgVo.ShardingTemplate;
 import org.xson.tangyuan.sharding.ShardingResult;
 import org.xson.tangyuan.type.Null;
+import org.xson.tangyuan.util.DateUtils;
 import org.xson.tangyuan.xml.node.AbstractServiceNode.TangYuanServiceType;
 
 public class MongoTextNode implements TangYuanNode {
@@ -90,6 +91,20 @@ public class MongoTextNode implements TangYuanNode {
 					if (val instanceof Null) {
 						builder.append("null");
 						continue;
+					}
+
+					// fix bug. date process
+					if (val instanceof java.sql.Time) {
+						val = DateUtils.getTimeString((java.sql.Time) val);
+					}
+					if (val instanceof java.sql.Date) {
+						val = DateUtils.getDateString((java.sql.Date) val);
+					}
+					if (val instanceof java.sql.Timestamp) {
+						val = DateUtils.getTimestampString((java.sql.Timestamp) val);
+					}
+					if (val instanceof java.util.Date) {
+						val = DateUtils.getDateTimeString((java.util.Date) val);
 					}
 
 					if (val instanceof String) {

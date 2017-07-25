@@ -39,10 +39,13 @@ public class UpdateParser extends SqlParser {
 
 	private void parseSetColumn(UpdateVo updateVo, String sql, int startPos, int endPos) {
 		// SET FirstName = 'Fred', ,
-		String[] array = sql.substring(startPos, endPos).split(",");
+		// String[] array = sql.substring(startPos, endPos).split(","); fix bug
+		String[] array = safeSplit(sql.substring(startPos, endPos), ',');
+
 		List<ColumnUpdateVo> setColumns = new ArrayList<ColumnUpdateVo>();
 		for (int i = 0, n = array.length; i < n; i++) {
-			String[] item = array[i].split("=");// TODO 可能有单引号
+			// String[] item = array[i].split("=");// 可能有单引号 fix bug
+			String[] item = safeSplit(array[i], '=');
 
 			if (item.length != 2) {
 				throw new SqlParseException("Illegal update set: " + sql);
@@ -50,7 +53,8 @@ public class UpdateParser extends SqlParser {
 
 			ColumnUpdateVo columnUpdateVo = new ColumnUpdateVo();
 			columnUpdateVo.setName(item[0].trim());
-			int pos = item[1].indexOf("+");
+			// int pos = item[1].indexOf("+");
+			int pos = findCharIndex(item[1], '+');// fix bug
 			if (pos > -1) {
 				columnUpdateVo.setType(ColumnUpdateType.ADD);
 				String a = item[1].substring(0, pos).trim();
@@ -65,7 +69,8 @@ public class UpdateParser extends SqlParser {
 				setColumns.add(columnUpdateVo);
 				continue;
 			}
-			pos = item[1].indexOf("-");
+			// pos = item[1].indexOf("-");
+			pos = findCharIndex(item[1], '-');// fix bug
 			if (pos > -1) {
 				columnUpdateVo.setType(ColumnUpdateType.MINUS);
 				String a = item[1].substring(0, pos).trim();
@@ -86,5 +91,23 @@ public class UpdateParser extends SqlParser {
 		}
 		updateVo.setSetColumns(setColumns);
 	}
+
+	// private int findCharIndex(String src, char chr) {
+	// boolean isString = false; // 是否进入字符串采集
+	// for (int i = 0; i < src.length(); i++) {
+	// char key = src.charAt(i);
+	// switch (key) {
+	// case '\'':
+	// isString = !isString;
+	// break;
+	// default:
+	// if (chr == key && !isString) {
+	// return i;
+	// }
+	// break;
+	// }
+	// }
+	// return -1;
+	// }
 
 }

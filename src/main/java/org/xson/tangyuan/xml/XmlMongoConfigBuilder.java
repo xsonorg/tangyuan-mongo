@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.xson.tangyuan.TangYuanContainer;
 import org.xson.tangyuan.TangYuanMongoContainer;
 import org.xson.tangyuan.datasource.DataSourceException;
 import org.xson.tangyuan.datasource.MongoDataSource;
@@ -16,13 +15,11 @@ import org.xson.tangyuan.datasource.MongoDataSourceVo;
 import org.xson.tangyuan.datasource.MongoSupport;
 import org.xson.tangyuan.datasource.MuiltMongoDataSourceManager;
 import org.xson.tangyuan.datasource.SimpleMongoDataSourceManager;
-import org.xson.tangyuan.executor.MongoServiceContextFactory;
 import org.xson.tangyuan.logging.Log;
 import org.xson.tangyuan.logging.LogFactory;
 import org.xson.tangyuan.transaction.DefaultTransactionMatcher;
 import org.xson.tangyuan.util.Resources;
 import org.xson.tangyuan.util.StringUtils;
-import org.xson.tangyuan.xml.node.AbstractServiceNode.TangYuanServiceType;
 import org.xson.tangyuan.xml.node.TangYuanNode;
 import org.xson.tangyuan.xml.node.XMLMongoNodeBuilder;
 
@@ -39,12 +36,27 @@ public class XmlMongoConfigBuilder implements XmlExtendBuilder {
 	private List<XMLMongoNodeBuilder>		xmlsqlNodeBuilderList	= null;
 	private XmlConfigurationBuilder			xmlConfigurationBuilder	= null;
 
-	public void parse(XmlConfigurationBuilder xmlConfigurationBuilder, String resource) throws Throwable {
+	// public void parse(XmlConfigurationBuilder xmlConfigurationBuilder, String resource) throws Throwable {
+	// this.xmlConfigurationBuilder = xmlConfigurationBuilder;
+	// InputStream inputStream = Resources.getResourceAsStream(resource);
+	// this.xPathParser = new XPathParser(inputStream);
+	// log.info("Start parsing: " + resource);
+	// configurationElement(xPathParser.evalNode("/configuration"));
+	// }
+
+	public XmlExtendCloseHook parse(XmlConfigurationBuilder xmlConfigurationBuilder, String resource) throws Throwable {
 		this.xmlConfigurationBuilder = xmlConfigurationBuilder;
 		InputStream inputStream = Resources.getResourceAsStream(resource);
 		this.xPathParser = new XPathParser(inputStream);
 		log.info("Start parsing: " + resource);
 		configurationElement(xPathParser.evalNode("/configuration"));
+		return new XmlExtendCloseHook() {
+			@Override
+			public void close() {
+				MongoSupport.close();
+				log.info("mongo extend plugin is closed.");
+			}
+		};
 	}
 
 	private void configurationElement(XmlNodeWrapper context) {
@@ -58,7 +70,7 @@ public class XmlMongoConfigBuilder implements XmlExtendBuilder {
 			buildShardingNodes(context.evalNodes("sharding"));
 			buildPluginNodes(context.evalNodes("plugin"));
 			// 注册所需
-			after();
+			// after();
 		} catch (Exception e) {
 			throw new XmlParseException(e);
 		}
@@ -240,8 +252,7 @@ public class XmlMongoConfigBuilder implements XmlExtendBuilder {
 			throw new XmlParseException("mapper只能有一项");
 		}
 		XmlNodeWrapper xNode = contexts.get(0);
-		String resource = StringUtils.trim(xNode.getStringAttribute("resource")); // xml
-																					// v
+		String resource = StringUtils.trim(xNode.getStringAttribute("resource")); // xml v
 		log.info("Start parsing: " + resource);
 		InputStream inputStream = Resources.getResourceAsStream(resource);
 		xmlMapperBuilder = new XmlMongoMapperBuilder(inputStream);
@@ -300,9 +311,9 @@ public class XmlMongoConfigBuilder implements XmlExtendBuilder {
 		}
 	}
 
-	public void after() {
-		TangYuanContainer.getInstance().registerContextFactory(TangYuanServiceType.MONGO, new MongoServiceContextFactory());
-	}
+	// public void after() {
+	// TangYuanContainer.getInstance().registerContextFactory(TangYuanServiceType.MONGO, new MongoServiceContextFactory());
+	// }
 
 	public DefaultTransactionMatcher getTransactionMatcher() {
 		return transactionMatcher;

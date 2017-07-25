@@ -8,6 +8,10 @@ public abstract class AbstractMongoNode extends AbstractServiceNode {
 
 	protected boolean		simple;
 
+	protected AbstractMongoNode() {
+		this.serviceType = TangYuanServiceType.MONGO;
+	}
+
 	public String getDsKey() {
 		return dsKey;
 	}

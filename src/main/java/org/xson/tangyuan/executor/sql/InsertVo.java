@@ -2,6 +2,7 @@ package org.xson.tangyuan.executor.sql;
 
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.xson.tangyuan.TangYuanMongoContainer;
 import org.xson.tangyuan.executor.sql.ValueVo.ValueType;
 import org.xson.tangyuan.logging.Log;
@@ -93,15 +94,22 @@ public class InsertVo implements SqlVo {
 	// document.put(columns.get(i), values.get(i).getValue());
 	// }
 	// log(document);
-	// // TODO: WriteConcern.ACKNOWLEDGED需要可以配置
 	// WriteResult result = collection.insert(document, WriteConcern.ACKNOWLEDGED);
 	// return result.getN();
 	// }
 
 	public Object insert(DBCollection collection) {
 		DBObject document = new BasicDBObject();
+		// 匹配_id
 		for (int i = 0, n = columns.size(); i < n; i++) {
-			document.put(columns.get(i), values.get(i).getValue());
+			// document.put(columns.get(i), values.get(i).getValue());
+
+			String tempColumn = columns.get(i);
+			if (3 == tempColumn.length() && tempColumn.equals("_id")) {
+				document.put(tempColumn, new ObjectId(values.get(i).getValue().toString()));
+			} else {
+				document.put(tempColumn, values.get(i).getValue());
+			}
 		}
 		log(document);
 		// TODO: WriteConcern.ACKNOWLEDGED需要可以配置

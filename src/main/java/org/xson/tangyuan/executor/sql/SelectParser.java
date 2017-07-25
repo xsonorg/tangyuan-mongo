@@ -131,6 +131,9 @@ public class SelectParser extends SqlParser {
 		for (int i = startPos; i < endPos; i++) {
 			char key = sql.charAt(i);
 			switch (key) {
+			case '\r':
+			case '\n':
+			case '\t':
 			case ' ':
 				if (builder.length() > 0) {
 					selectVo.setTable(builder.toString());

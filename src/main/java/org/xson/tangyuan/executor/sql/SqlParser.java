@@ -40,6 +40,9 @@ public class SqlParser {
 
 	public SqlVo parse(String sql) throws SqlParseException {
 		sql = sql.trim();
+		if (sql.endsWith(";")) {// fix bug
+			sql = sql.substring(0, sql.length() - 1);
+		}
 		String ucSql = sql.toUpperCase();
 		if (ucSql.startsWith(SELECT_MARK)) {
 			return new SelectParser().parse(sql, ucSql);
@@ -87,12 +90,25 @@ public class SqlParser {
 				}
 				break;
 			case ')':
-				if (builder.length() > 0) {
-					bracketsCondition.setValue(parseValueVo(builder.toString().trim(), false));
-					leftKey = null;
-					builder = new StringBuilder();
+				// if (builder.length() > 0) {
+				// bracketsCondition.setValue(parseValueVo(builder.toString().trim(), false));
+				// leftKey = null;
+				// builder = new StringBuilder();
+				// }
+				// bracketsCondition = stack.pop();
+				// break;
+
+				// fix bug
+				if (isString) {
+					builder.append(key);
+				} else {
+					if (builder.length() > 0) {
+						bracketsCondition.setValue(parseValueVo(builder.toString().trim(), false));
+						leftKey = null;
+						builder = new StringBuilder();
+					}
+					bracketsCondition = stack.pop();
 				}
-				bracketsCondition = stack.pop();
 				break;
 			case '=':
 				if (isString) {
@@ -242,12 +258,16 @@ public class SqlParser {
 		if (-1 == startBracketsPos) {
 			throw new SqlParseException("Illegal where in: " + sql);
 		}
-		int endBracketsPos = sql.indexOf(")", startBracketsPos);
+		// int endBracketsPos = sql.indexOf(")", startBracketsPos);
+		// fix bug
+		int endBracketsPos = findCharIndex(sql, startBracketsPos, ')');
 		if (-1 == endBracketsPos) {
 			throw new SqlParseException("Illegal where in: " + sql);
 		}
 		// INTEGER, DOUBLE, STRING
-		String[] array = sql.substring(startBracketsPos + 1, endBracketsPos).split(",");
+		// String[] array = sql.substring(startBracketsPos + 1, endBracketsPos).split(",");
+		// fix bug
+		String[] array = safeSplit(sql.substring(startBracketsPos + 1, endBracketsPos), ',');
 		if (0 == array.length) {
 			throw new SqlParseException("Illegal where in: " + sql);
 		}
@@ -411,6 +431,83 @@ public class SqlParser {
 				}
 				break;
 			default:
+				break;
+			}
+		}
+		return -1;
+	}
+
+	/** 把字符串分割成数组 */
+	protected String[] safeSplit(String src, char separator) {
+		List<String> temp = new ArrayList<String>();
+		StringBuilder sb = new StringBuilder();
+		boolean isString = false; // 是否进入字符串采集
+		for (int i = 0; i < src.length(); i++) {
+			char key = src.charAt(i);
+			switch (key) {
+			case '\'':
+				isString = !isString;
+				sb.append(key);
+				break;
+			default:
+				if (separator == key && !isString) {
+					if (sb.length() > 0) {
+						temp.add(sb.toString());
+						sb = new StringBuilder();
+					}
+				} else {
+					sb.append(key);
+				}
+				break;
+			}
+		}
+
+		if (sb.length() > 0) {
+			temp.add(sb.toString());
+		}
+
+		String[] result = new String[temp.size()];
+		return temp.toArray(result);
+	}
+
+	// protected int findCharIndex(String src, char chr) {
+	// boolean isString = false; // 是否进入字符串采集
+	// for (int i = 0; i < src.length(); i++) {
+	// char key = src.charAt(i);
+	// switch (key) {
+	// case '\'':
+	// isString = !isString;
+	// break;
+	// default:
+	// if (chr == key && !isString) {
+	// return i;
+	// }
+	// break;
+	// }
+	// }
+	// return -1;
+	// }
+
+	protected int findCharIndex(String src, char chr) {
+		return findCharIndex(src, 0, src.length(), chr);
+	}
+
+	protected int findCharIndex(String src, int start, char chr) {
+		return findCharIndex(src, start, src.length(), chr);
+	}
+
+	protected int findCharIndex(String src, int start, int end, char chr) {
+		boolean isString = false; // 是否进入字符串采集
+		for (int i = start; i < end; i++) {
+			char key = src.charAt(i);
+			switch (key) {
+			case '\'':
+				isString = !isString;
+				break;
+			default:
+				if (chr == key && !isString) {
+					return i;
+				}
 				break;
 			}
 		}

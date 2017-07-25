@@ -77,7 +77,18 @@ public class MongoActuator {
 	public Object selectVar(String dsKey, String sql) {
 		SelectVo selectVo = (SelectVo) sqlParser.parse(sql);
 		DBCollection collection = MongoSupport.getCollection(dsKey, selectVo.getTable());
-		return selectVo.selectVar(collection);
+		// return selectVo.selectVar(collection); fix bug
+		Object result = selectVo.selectVar(collection);
+		if (null == result) {
+			return result;
+		}
+		if (result instanceof DBObject) {
+			// return getXCOResults((DBObject) result, null);
+			XCO one = getXCOResults((DBObject) result, null);
+			return selectVo.selectVarOneField(one);
+		} else {
+			return result;
+		}
 	}
 
 	public Object insert(String dsKey, String sql) {

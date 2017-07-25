@@ -3,8 +3,10 @@ package org.xson.tangyuan;
 import java.util.Map;
 
 import org.xson.tangyuan.datasource.MongoDataSourceManager;
+import org.xson.tangyuan.executor.MongoServiceContextFactory;
 import org.xson.tangyuan.sharding.ShardingDefVo;
 import org.xson.tangyuan.xml.XmlMongoConfigBuilder;
+import org.xson.tangyuan.xml.node.AbstractServiceNode.TangYuanServiceType;
 
 import com.mongodb.WriteConcern;
 
@@ -20,6 +22,7 @@ public class TangYuanMongoContainer {
 
 	static {
 		TangYuanContainer.getInstance().getBuilderMap().put("mongo", new XmlMongoConfigBuilder());
+		TangYuanContainer.getInstance().registerContextFactory(TangYuanServiceType.MONGO, new MongoServiceContextFactory());
 	}
 
 	private TangYuanMongoContainer() {

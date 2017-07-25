@@ -38,12 +38,16 @@ public class InsertParser extends SqlParser {
 		if (-1 == leftBracketsPos) {
 			throw new SqlParseException("Illegal insert: " + sql);
 		}
-		rightBracketsPos = ucSql.indexOf(")", leftBracketsPos);
+		// rightBracketsPos = ucSql.indexOf(")", leftBracketsPos);
+		// fix buf
+		rightBracketsPos = findCharIndex(ucSql, leftBracketsPos, ')');
 		if (-1 == rightBracketsPos) {
 			throw new SqlParseException("Illegal insert: " + sql);
 		}
 
-		array = sql.substring(leftBracketsPos + 1, rightBracketsPos).split(",");
+		// array = sql.substring(leftBracketsPos + 1, rightBracketsPos).split(",");
+		// fix bug
+		array = safeSplit(sql.substring(leftBracketsPos + 1, rightBracketsPos), ',');
 		List<ValueVo> values = new ArrayList<ValueVo>();
 		for (int i = 0, n = array.length; i < n; i++) {
 			values.add(parseValueVo(array[i].trim()));

@@ -2,6 +2,8 @@ package org.xson.tangyuan.executor.sql;
 
 import java.util.List;
 
+import org.xson.common.object.XCO;
+import org.xson.tangyuan.TangYuanException;
 import org.xson.tangyuan.logging.Log;
 import org.xson.tangyuan.logging.LogFactory;
 
@@ -209,6 +211,15 @@ public class SelectVo implements SqlVo {
 		} else {
 			return getQueryCount(collection);
 		}
+	}
+
+	/** 仅获取一个字段 */
+	public Object selectVarOneField(XCO one) {
+		if (null == columns || columns.size() != 1) {
+			throw new TangYuanException("SelectOne query, the return column is not unique.");
+		}
+		String column = columns.get(0);
+		return one.getObjectValue(column);
 	}
 
 	public DBCursor selectSet(DBCollection collection) {
